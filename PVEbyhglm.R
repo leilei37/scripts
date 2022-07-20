@@ -42,10 +42,9 @@ apve<-cbind(colnames(phdata(data_rna))[3:13],apve)
 #hglm_model2$varFix is residual的variance component
 #hglm_model2$varRanef are variance components of 2 random effects
 #heribility is equal to sum（c）
-write.csv(apve,file = '~/Documents/图数据/apve.csv')
-apve<-read.csv('~/Documents/图数据/apve.csv')
+write.csv(apve,file = '~/Documents/apve.csv')
+apve<-read.csv('~/Documents/apve.csv')
 library(ggplot2)
 p <- ggplot(apve,aes(x=reorder(Traits,X),y=PVE,fill=QTLtype))+geom_bar(position="dodge",stat="identity")
 p+xlab("") + ylab("PVE") + labs(fill="")+theme_classic()+ scale_fill_manual(values = c('#7972A6','#F2B84B'))+
   theme(legend.position = 'bottom',axis.text.x=element_text(vjust=1,size=5,face = "bold"))
-heatmap.2聚类函数
