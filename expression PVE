@@ -1,0 +1,5 @@
+#profile from osca
+../osca_Mac --befile grprofile --make-orm --out grorm
+for line in `cat ./phen`; do
+    ../osca_Mac --reml --orm grorm --pheno $line --out ./genepve/${line}grreml
+done
