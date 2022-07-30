@@ -7,3 +7,6 @@ osca --befile myprofile --missing-ratio-probe 0.01 --make-bod --out newprofile
 #mlm
 ./osca_Mac --moa-exact --befile ln2profile --pheno agri1.phen --out mymlmexactagri1
 ./osca_Mac --moa-exact --befile myprofile --pheno my.phen --task-num 1000 --task-id 1 --thread-num 10 --out my
+for line in `cat ./phen`; do
+    ./osca_Mac --moa-exact --befile lnprofile --pheno $line --out mymlmexact$line 
+done
