@@ -35,9 +35,6 @@ for line in `cat /Users/leilei/Downloads/list36.txt`;do
 awk 'NF>7{print $0}' $line > ${line}n
 done
 
-ll<-read.table('~/Downloads/WGCNA/cojo_input/phekernMEgreenpc2.RData.txtn')
-ll2<-read.table('~/Downloads/WGCNA/cojo_input/phel3bMEyellow.RData.txtn',header = T)
-sn<-as.character(ll2[,1])
 
 e<-gregexpr(pattern ='_', sn)
 library(stringr)
