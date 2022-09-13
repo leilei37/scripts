@@ -1,0 +1,7 @@
+GenABEL::export.plink(data_rna,filebasename = 'ti1',transpose = T)
+GenABEL::export.plink(data_rna,filebasename = 'timore1',transpose = F)
+plink --file test --make-bed --out test_1 
+./plink --bfile maf05t --export vcf --out maf05t1
+#snp anotation
+java -jar snpEff.jar build -gtf22 -v maize -d -noCheckCds -noCheckProtein
+java -jar snpEff.jar eff -v maize -i vcf maize/maf05t1.vcf >test.vcf
