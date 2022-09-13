@@ -1,0 +1,37 @@
+# All intersect snp and mapped snp are needed!!!!
+bgzip ~/Downloads/meta/why25M.vcf
+bgzip ~/Downloads/result_maize1/snpEff/maize/maf05t1.vcf
+tabix -p vcf ~/Downloads/meta/why25M.vcf.gz
+tabix -p vcf ~/Downloads/result_maize1/snpEff/maize/maf05t1.vcf.gz
+vcf-compare --cmp-genotypes -R ~/Downloads/meta/25M.vcf ~/Downloads/result_maize1/snpEff/maize/maf05t1.vcf
+vcf-compare ~/Downloads/meta/why25.vcf.gz ~/Downloads/result_maize1/snpEff/maize/maf05t1.vcf.gz
+vcftools --vcf ~/Downloads/meta/why25.vcf --diff ~/Downloads/result_maize1/snpEff/maize/maf05t1.vcf --diff-site --out ~/Downloads/w_v_k
+cat ~/Downloads/w_v_k |awk '{if($4=="B")print}' > diffout
+cat ~/Downloads/w_v_k |awk '{if($4=="O")print}' > mismatch
+R trim_mathch.R
+python switch_ref_alt.py
+#bgzip ~/Downloads/maf05t1_new.vcf
+#tabix -p vcf ~/Downloads/maf05t1_new.vcf.gz
+vcftools --gzvcf ~/Downloads/meta/why25.vcf.gz --exclude-positions mismatch_del --recode --out ~/Downloads/1why25
+vcftools --gzvcf ~/Downloads/maf05t1_new.vcf.gz --exclude-positions mismatch_del --recode --out ~/Downloads/1maf05t1_new
+bgzip ~/Downloads/1why25.recode.vcf
+tabix -p vcf ~/Downloads/1why25.recode.vcf.gz
+bgzip ~/Downloads/1maf05t1_new.recode.vcf
+tabix -p vcf ~/Downloads/1maf05t1_new.recode.vcf.gz
+bcftools merge ~/Downloads/1maf05t1_new.recode.vcf.gz ~/Downloads/1why25.recode.vcf.gz -o merge.vcf
+plink --vcf ~/merge.vcf --double-id --make-bed --out  ~/merge
+#/Users/leilei/Downloads/result_maize1/plink_mac_20220305/plink --vcf ~/Downloads/meta/why25.vcf.gz --make-bed --out  ~/Downloads/why25
+#/Users/leilei/Downloads/result_maize1/plink_mac_20220305/plink --vcf ~/Downloads/maf05t1_new.vcf.gz  --recode --out ~/Downloads/maf05t1_new
+#/Users/leilei/Downloads/result_maize1/plink_mac_20220305/plink --bfile ~/Downloads/why25 --merge ~/Downloads/maf05t1_new.ped ~/Downloads/maf05t1_new.map --recode --out merge
+#######R
+library(GenABEL)
+tfam<-read.table('/Users/leilei/Downloads/merge.tfam')
+convert.snp.tped(tped="/Users/leilei/Downloads/epi/amerge.tped",
+                 tfam="/Users/leilei/Downloads/epi/merge.tfam",
+                 out="/Users/leilei/Downloads/gen0tped.raw",
+                 strand="+")
+load('~/Downloads/gen0tped.raw')
+load('~/Downloads/LEI/data/11agri.RData')
+df <- load.gwaa.data(phe="/Users/leilei/Downloads/phe.txt",
+                     gen="/Users/leilei/Downloads/gen0tped.raw",
+                     force=TRUE)
