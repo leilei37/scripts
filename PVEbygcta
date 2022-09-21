@@ -1,0 +1,26 @@
+gcta <- "~/Downloads/gcta-1.94.1-MacOS-x86_64/gcta-1.94.1"
+gcta <- "/public/home/leimengyu/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1"
+
+
+GCTA_estKin <- function(gcta,output){
+  cmd_k <- paste(gcta,"--bfile maf05", "--make-grm" ,"--make-grm-alg 1","--out",output,sep=" ")
+  print(cmd_k)
+  system(cmd_k)
+}
+
+GCTA_REML <- function(t1,output,gcta=gcta,phenotype=out_gcta,grm){
+  #trait <- which(colnames(phenotype)== t1)
+  output1 <- paste(output,t1,sep="")
+  cmd_biGREML <- paste(gcta,"--pheno gr.txt","--grm",grm,"--reml","--mpheno",t1, "--out",output1,sep=" ")
+  cat(cmd_biGREML,"\n")
+  #cat(trait,"\n")
+  system(cmd_biGREML)
+  cat(output1,"\n")
+}
+
+GCTA_estKin(gcta=gcta,output = "./oak")
+phgr1<-read.table('~/Downloads/packages/gcta_1.93.2beta/gr.txt',header = T)
+phgr1<-read.table('/public/home/leimengyu/gcta-1.94.1-linux-kernel-3-x86_64/gr.txt',header = T)
+for (i in colnames(phgr)[3:length(phgr)]) {
+GCTA_REML(t1=i,output="./rt/des",gcta=gcta,phenotype=phe,grm="./oak")
+}
