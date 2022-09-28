@@ -31,5 +31,6 @@ for(i in 1:max(folds)){
   accuracymatrixh3[1,colnum]<-j
 }
 }
+  return(accuracymatrixh3)
 }
-accuracyestimate(h3=h4,accuracymatrixh3=accuracymatrixh4)
+accuracymatrixh4<-accuracyestimate(h3=h4,accuracymatrixh3=accuracymatrixh4)
