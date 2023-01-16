@@ -1,0 +1,51 @@
+#args<-commandArgs(TRUE)
+  library(doSNOW)
+  library(foreach)
+  myCluster <- makeCluster(6, outfile="")
+  registerDoSNOW(myCluster)
+  zscore <- function(x) qnorm((rank(x, na.last = "keep") - 0.5)/sum(!is.na(x)))
+  gwas <- function(i) {
+    lambdas<-c()
+    library(GenABEL)
+    load("~/Downloads/80n0gsh100.RData")
+   # load("/Users/leilei/Downloads/课题/data/groot_per50.RData")
+    data1<-zscore(phdata(data_rna)[,i])
+    data1.gkin <- ibs(data_rna[, autosomal(data_rna)], weight="freq")
+    hy<- try(polygenic(data1,kinship.matrix =data1.gkin,data =data_rna),silent = T)
+    if (!inherits(hy, "try-error")) {
+      mm <- try(mmscore(hy, data=data_rna), silent = T)
+      if(!inherits(mm,"try-error")){
+        lambdas[i]<-lambda(mm)$estimate
+        thres<-1.04E-8
+        if(any(-log10(mm[,"P1df"]) > -log10(thres))){
+          if(lambdas[i]< 1.05){
+          png(filename=paste0("/Users/leilei/Downloads/gsh100/",colnames(phdata(data_rna)[i]),".PNG"))
+          par(mfrow=c(3,1))
+          plot(mm)
+          abline(h = -log10(thres),lty="dashed",col="red")
+          estlambda(mm[, "P1df"], plot=TRUE)
+          hist(data1,main=paste("Histogram of",colnames(phdata(data_rna)[i]),xlab = "expression"))
+          dev.off()
+          save(mm,file=paste0("/Users/leilei/Downloads/gsh100/",colnames(phdata(data_rna)[i]),".RData"))
+          write.table(lambdas[i],file=paste0("/Users/leilei/Downloads/gsh100/",i,colnames(phdata(data_rna)[i])),row.names = F,col.names = F)}
+          #else if(lambdas[i]< 1.1){
+            #png(filename=paste0("/Users/leilei/Downloads/testresults/lambdas1/",colnames(phdata(data_rna)[i]),".PNG"))
+            #par(mfrow=c(3,1))
+            #plot(mm)
+            #abline(h = thres,lty="dashed",col="red")
+            #estlambda(mm[, "P1df"], plot=TRUE)
+            #hist(phdata(data_rna)[1:298,i],main=paste("Histogram of",colnames(phdata(data_rna)[i]),xlab = "expression"))
+            #dev.off()
+            #save(mm,file=paste0("/Users/leilei/Downloads/testresults/lambdas1/",colnames(phdata(data_rna)[i]),".RData"))
+            #write.table(lambdas[i],file=paste0("/Users/leilei/Downloads/testresults/lambdas1/11",i,colnames(phdata(data_rna)[i])),row.names = F,col.names = F)
+          #}
+        }
+      }
+    }
+  }
+  
+  
+  #start <- strtoi(args[1]) * 50 + 1
+  #end <- start + 49
+  #print(start)
+  stopCluster(myCluster)
