@@ -38,3 +38,4 @@ $macs2 callpeak -f BAMPE -t ${wkdir}/bowtie2/${line}filt.bam  -g 2.1e+9 --nomode
 $samtools view -c ${wkdir}/bowtie2/${line}filt.bam > ${wkdir}/bowtie2/${line}.count
 $samtools view -c -L ${wkdir}/macs3/${line}.narrowPeak {wkdir}/bowtie2/${line}filt.bam > ${wkdir}/bowtie2/${line}.peakcount
 done
+idr --samples peak1 peak2 --peak-list merge.peak --plot
