@@ -1,5 +1,19 @@
 #The analyse of diversity of tissue expression
 #1.1pca 
+pca <- prcomp(t(data.matrix), scale = TRUE, center=TRUE)
+pca.var <- pca$sdev^2
+pca.var.per <- round(pca.var/sum(pca.var)*100, 1)
+pca.var.per
+pca.data <- data.frame(Sample=rownames(pca$x),
+                       X=pca$x[,1],
+                       Y=pca$x[,2])
+ggplot(data=pca.data, aes(x=X, y=Y, label=Sample))+
+  geom_text() +
+  xlab(paste("PC1 - ", pca.var.per[1], "%", sep=""))+
+  ylab(paste("PC2 - ", pca.var.per[2], "%", sep=""))+
+  theme_bw()+
+  ggtitle("My PCA Graph")
+##MDS
 data1.gkin <- ibs(data_rna[, autosomal(data_rna)], weight="freq")
 #make distance matrix by kinship
 data1.dist <- as.dist(0.5-data1.gkin)
