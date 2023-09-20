@@ -1,0 +1,159 @@
+##get genome data to make index
+wget http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.gff3
+wget http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con
+#qc remove adaptor and low quality reads.('fastq' package)
+#if company don't make an adaptor file,trim_galore can auto detect adaptor.
+/public/home/leimengyu/anaconda3/envs/r-3.6/bin/trim_galore -q 30 --phred33 --stringency 5 --length 50  --paired /vol3/agis/yeguoyou_group/muvunyi/wenli/ANNO_ANCBJ170219_PM-ANCBJ170219-11_2022-02-23/Rawdata/99/99_R1.fq.gz /vol3/agis/yeguoyou_group/muvunyi/wenli/ANNO_ANCBJ170219_PM-ANCBJ170219-11_2022-02-23/Rawdata/99/99_R2.fq.gz --gzip -o /vol3/agis/yeguoyou_group/leimengyu/dd/clean/
+#test 1 sample to compare cleandata from company and ourselves
+/public/home/leimengyu/anaconda3/envs/r-3.6/bin/trim_galore -q 30 --phred33 --stringency 5 --length 50  --paired /vol3/agis/yeguoyou_group/muvunyi/wenli/ANNO_ANCBJ170219_PM-ANCBJ170219-11_2022-02-23/Rawdata/99/99_R1.fq.gz /vol3/agis/yeguoyou_group/muvunyi/wenli/ANNO_ANCBJ170219_PM-ANCBJ170219-11_2022-02-23/Rawdata/99/99_R2.fq.gz --gzip -o /vol3/agis/yeguoyou_group/leimengyu/dd/clean/
+fastqc *.fq.gz -o /vol3/agis/yeguoyou_group/leimengyu/dd/clean/
+#(if our trim is better,next trim all rawdata)
+#make a list
+find /vol3/agis/yeguoyou_group/muvunyi/wenli/ANNO_ANCBJ170219_PM-ANCBJ170219-11_2022-02-23/Rawdata -name '*.fq.gz*'
+
+for line in `sed -n 'p;n' /vol3/agis/yeguoyou_group/leimengyu/dd/`; do
+/public/home/leimengyu/anaconda3/envs/r-3.6/bin/trim_galore -q 30 --phred33 --stringency 5 --length 50  --paired /vol3/agis/yeguoyou_group/muvunyi/wenli/ANNO_ANCBJ170219_PM-ANCBJ170219-11_2022-02-23/Rawdata/99/99_R1.fq.gz /vol3/agis/yeguoyou_group/muvunyi/wenli/ANNO_ANCBJ170219_PM-ANCBJ170219-11_2022-02-23/Rawdata/99/99_R2.fq.gz --gzip -o /vol3/agis/yeguoyou_group/leimengyu/dd/clean/
+done
+#or
+mkdir 4.trimg
+cd ./4.trimg/
+#soft link
+ln -s ~/path/to/*rmrRNA.fq.gz ./
+
+cat ../SRR_Acc_List.txt | while read id
+do
+echo "trim_galore --length 35 --paired --retain_unpaired --cores 16 -o ./ ${id}_rm_1.fq.gz ${id}_rm_2.fq.gz"
+done > trim.sh
+
+nohup bash trim.sh &
+##qc again
+fastqc -t 16 -o ./ ./*.fq.gz
+multiqc ./*zip -o ./
+##make index.note：there are bug in star2.5.3a
+/public/home/leimengyu/anaconda3/envs/java9/bin/STAR \
+--runMode genomeGenerate \
+--genomeDir /vol3/agis/yeguoyou_group/leimengyu/dd/osindex/ \
+--genomeFastaFiles /vol3/agis/yeguoyou_group/leimengyu/dd/all.con \
+--sjdbGTFfile /vol3/agis/yeguoyou_group/leimengyu/dd/all.gff3
+--sjdbOverhang 150
+--genomeSAindexNbases 10
+#note：sjdbOverhang is about the length of read minus 1.In this case,the read is show below,the length is 151.
+GTTCGCCCACCCGGTCATGTGACTAGCATTTGGGAGACTACCCCACTGCTGTTGACCGAGACCTGGAGACTGGCCAAGAGGCAGGACGGGCGAAGCCCAGCTTGTGCCTGGTGTACCAAAACCGCCTGCTTGTGGAAACAATCCGCCGAT
+#rename file
+for line in `cat list.txt`; do
+a=`echo $line | perl -lne '/(\d+)/ && print $1'`
+b=`echo $line | perl -lne '/([^_]+$)/ && print $1'`
+mv $line "${a}_${b}" 
+done
+##align
+for i in {1..108};do
+/public/home/leimengyu/anaconda3/envs/r-3.6/bin/STAR --runThreadN 40 --genomeDir /vol3/agis/yeguoyou_group/leimengyu/dd/osindex 
+--readFilesCommand zcat --readFilesIn /vol3/agis/yeguoyou_group/leimengyu/dd/cleandata/${i}_R1.fastq.gz /vol3/agis/yeguoyou_group/leimengyu/dd/cleandata/${i}_R2.fastq.gz
+--outFileNamePrefix /vol3/agis/yeguoyou_group/leimengyu/dd/bam/$i --outSAMtype BAM SortedByCoordinate --outBAMsortingThreadN 40 
+--quantMode TranscriptomeSAM GeneCounts 
+done
+
+/public/home/leimengyu/anaconda3/envs/r-3.6/bin/STAR --runThreadN 40 --genomeDir /vol3/agis/yeguoyou_group/leimengyu/dd/osindex --readFilesCommand zcat --readFilesIn /vol3/agis/yeguoyou_group/leimengyu/dd/cleandata/40_R1.fastq.gz /vol3/agis/yeguoyou_group/leimengyu/dd/cleandata/40_R2.fastq.gz --outFileNamePrefix /vol3/agis/yeguoyou_group/leimengyu/dd/bam/40 --outSAMtype BAM SortedByCoordinate --outBAMsortingThreadN 40 --quantMode TranscriptomeSAM GeneCounts
+#gff convert to gtf
+gffread /vol3/agis/yeguoyou_group/leimengyu/dd/data/all.gff3 -T -o /vol3/agis/yeguoyou_group/lemengyu/dd/data/all.gtf
+##make gene expression matrix
+/public/home/leimengyu/anaconda3/envs/r-3.6/bin/featureCounts \
+-a /vol3/agis/yeguoyou_group/leimengyu/dd/data/gtf \
+-p \
+-T 8 \
+-o /vol3/agis/yeguoyou_group/leimengyu/dd/matrix.txt \
+/vol3/agis/yeguoyou_group/leimengyu/dd/bam/*.sortedByCoord.out.bam
+#input file must be .sortedByCoord.out.bam、
+#get matrix for deseq
+awk -F '\t' '{print $1,$7,$8}' OFS='\t' hisat_counts.txt >hisat_matrix.out
+awk -F '\t' '{print $1,$7,$8}' OFS='\t' subread_counts.txt >subread_matrix.out
+###qc
+##bam qc(get pca results)
+#note:rawcount or nomalizationcount(generate by deseq2 rlog or vtf)?
+/public/home/leimengyu/anaconda3/bin/qualimap multi-bamqc -r -d /vol3/agis/yeguoyou_group/leimengyu/dd/mapfile1.txt -gff /vol3/agis/yeguoyou_group/leimengyu/dd/data/gtf -outdir /vol3/agis/yeguoyou_group/leimengyu/dd/multi_bamqc -outformat PDF:HTML
+/public/home/leimengyu/anaconda3/bin/qualimap bamqc -bam /vol3/agis/yeguoyou_group/leimengyu/dd/bam/1Aligned.sortedByCoord.out.bam -outdir /vol3/agis/yeguoyou_group/leimengyu/dd/1
+
+samtools stats  test.bam  >test.stats
+/public/home/leimengyu/anaconda3/envs/java9/binplot-bamstats -p test  test.stats
+#filter low map quality
+samtools view -S -q 30 ./raw.sam >./filrer_MAPQ20.sam
+##iseqc
+Rscript --vanilla iSeqQC_cli/iSeqQC.R exampleData/samplemanifestfile.txt {sample_phenotype_file} exampleData/genesymbol_rawcounts.txt {count_matrix} R {type_of_reads} SYMBOL {type_of_gene_identifier} H {Organism}
+Rscript --vanilla ./dd/iSeqQC.R ./phe.txt ./rawcount.txt  gene-id R ID O
+/public/home/leimengyu/data/samtools-1.9/samtools index /vol3/agis/yeguoyou_group/leimengyu/dd/bam/5Aligned.sortedByCoord.out.bam /vol3/agis/yeguoyou_group/leimengyu/dd/5sorted.bam
+bamCoverage -b tmp.sorted.bam -o tmp.bw
+
+/opt/homebrew/Caskroom/miniforge/base/bin/bamCoverage -b ~/Downloads/5sample.marked.bam -o 5tmprmdu.bw
+gatk MarkDuplicates \
+	-I sample.bam -O sample.marked.bam -M sample.dups.txt
+ samtools depth -r Chr8:270000-271000
+# Scatter Plot & Correlations
+#3duplicate
+library(psych)
+tiff("K:/Zouwenlidata/dormancy/Genotype1/Geno1_H_B.tiff", 
+     units="in", width=20, height=12, res=720)
+pairs.panels(MyGeno1[,c(1:3)],
+             gap = 0,
+             bg = c("grey", "blue","black"),
+             pch=21)
+
+dev.off() 
+#if the correlation is not good,we remove the bad gene expression of bad sample,
+#we put the average of the other gene expressions in it or the average of gene expression of the other duplicated sample .
+##all
+fpkm <- read.table('~/Downloads/mengyun/ensemble/diffexp_result_exonly.txt', header = T, row.names = 1)	#header=T,第一行指定为列名，row.names=1指定第一列为行名
+corr <- cor(fpkm, method = 'spearman')  #cor函数计算两两样本（列与列）之间的相关系数
+#install 'corrplot' for plot correlation
+if (!requireNamespace('corrplot', quietly = TRUE))
+  install.packages('corrplot')
+library('corrplot')	
+corrplot(corr, type = 'upper', tl.col = 'black', order = 'hclust', tl.srt = 45, addCoef.col = 'white')	
+# type='upper'：只显示右上角相关系数矩阵
+# tl.col='black'：字体颜色黑色
+# order='hclust'：使用层次聚类算法
+# tl.srt = 45：x轴标签倾斜45度
+# addCoef.col='white'：添加相关系数数值，颜色白色
+
+#pca
+#note:matrix nomalization or not
+myfpkm<-read.table("~/Downloads/mengyun/ensemble/diffexp_result_exonly.txt",header=TRUE,comment.char="",sep = "\t",check.names=FALSE,row.names=1)
+probesetvar = apply(myfpkm, 1, var)  #表达变化大的基因
+ord = order(probesetvar, decreasing=TRUE)[1:200]   #前200个基因，或者更多
+pca = prcomp(t(myfpkm[ord,]), scale=TRUE)
+ss=summary(pca)
+#绘图：
+
+plot(pca$x[,1:2],col=rep(c(1,2,3,4,1,2,3,4),each=3),pch=rep(c(16,17),each=12))
+
+#DEG
+#DESeq nomalization=T not equal to r-log or vft 
+library(DESeq2)
+input_matrix='~/Downloads/mengyun/matrix.txt'
+input_info='~/Downloads/mengyun/sample_info.txt'
+output_file='~/Downloads/mengyun/diffexp_result.txt'
+input_data <- read.table(input_matrix,header = TRUE,row.names = 1)
+input_data <- round(input_data,digits=0)
+input_data <- as.matrix(input_data)
+input_data
+info_data <- read.table(input_info,header = TRUE,row.names = 1)
+info_data <- as.matrix(info_data)
+info_data
+
+dds <- DESeqDataSetFromMatrix(countData = input_data1,colData = info_data,design = ~batch+label)
+dds <- DESeq(dds)
+result <- results(dds,alpha = 0.1)
+summary(result)
+result <- result[order(result$padj),]
+#deseq2.sig <- subset(result, padj < 0.05 & abs(log2FoldChange) > 1)
+result_data <- merge(as.data.frame(result),as.data.frame(counts(dds,normalized=TRUE)),by='row.names',sort=FALSE)
+#desq2 <- merge(as.data.frame(deseq2.sig),as.data.frame(counts(dds,normalized=TRUE)),by='row.names',sort=FALSE)
+#names(desq2)[1] <- 'Gene'
+#write.table(desq2,file='~/Downloads/mengyun/padj<0.05&log2FC>1or<-1.txt',sep = '\t',quote=F,row.names = F)
+
+names(result_data)[1] <- 'Gene'
+write.table(result_data,file=output_file,sep = '\t',quote=F,row.names = F)
+
+#volcano
+#heatmap
+
+
