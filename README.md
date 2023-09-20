@@ -33,11 +33,3 @@ Some theorical interpretations for code can be found in my [blog](https://leilei
 ### RNA-seq
 1. Find DEG
 
-
-#### 学习思路
-statistics -> [data science](https://leilei37.github.io/2023/04/12/DataScience/)
-quantitative genetics
-
-### Algorithm & Programming
-[Makefile](https://seisman.github.io/how-to-write-makefile/invoke.html)
-R packages: [ggplot](https://leilei37.github.io/2022/11/25/ggplot/)
