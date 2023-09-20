@@ -5,6 +5,9 @@ Some theorical interpretations for code can be found in my [blog](https://leilei
 
 ### PP (Phenotype preparation)
 
+## pre-analysis
+1. pca
+
 ### GWAS
 1. calculate heritability.
 2. calculate independent snp and bonferroni-p value
@@ -20,6 +23,7 @@ Some theorical interpretations for code can be found in my [blog](https://leilei
 2. calculate PVE for specific cluster of snps.
 3. MR
 4. WGCNA
+5. **evolutionary analysis** dn/ds
 
 ### GS
 1. Genomic prediction(G matrix)		[[code]](https://github.com/leilei37/meta/blob/main/GS.R)
