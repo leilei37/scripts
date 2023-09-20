@@ -5,7 +5,7 @@ Some theorical interpretations for code can be found in my [blog](https://leilei
 
 ### PP (Phenotype preparation)
 
-## pre-analysis
+### pre-analysis
 1. pca
 
 ### GWAS
