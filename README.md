@@ -10,7 +10,7 @@ Some theorical interpretations for code can be found in my [blog](https://leilei
 
 ### GWAS
 1. calculate heritability.
-2. calculate independent snp and bonferroni-p value
+2. calculate independent snp and bonferroni-p value threshold
 3. GWAS
 4. Fine mapping
    conditional analysis
